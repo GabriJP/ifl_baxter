@@ -168,3 +168,8 @@ class Limb:
 
 limb_left = Limb("left")
 limb_right = Limb("right")
+
+limbs = dict(
+    left=limb_left,
+    right=limb_right,
+)

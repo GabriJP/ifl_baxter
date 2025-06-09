@@ -20,10 +20,10 @@ from utils.fed import BrnnClient
 logging.basicConfig(level=logging.INFO)
 
 
-def get_xyz_ee(array_ang: F64_A) -> F64_A:
+def get_xyz_ee(array_ang: F64_A, limb_name: str) -> F64_A:
     from data_generator import analytic_model as rbd
 
-    limb_baxter = rbd.limb_left
+    limb_baxter = rbd.limbs[limb_name]
     xyz = []
     for ang in array_ang:
         limb_baxter.reset_joints(ang)
@@ -33,13 +33,13 @@ def get_xyz_ee(array_ang: F64_A) -> F64_A:
     return np.array(xyz)
 
 
-def plot_xyz_paths(trajectories: list[F64_A]) -> None:
+def plot_xyz_paths(trajectories: list[F64_A], limb_name: str) -> None:
     fig = plt.figure(figsize=(12, 8))
     ax1 = fig.add_subplot(1, 2, 1, projection="3d")
     ax2 = fig.add_subplot(2, 2, 2)
     ax3 = fig.add_subplot(2, 2, 4)
     for traj in trajectories:
-        xyz_traj = get_xyz_ee(traj[::20])
+        xyz_traj = get_xyz_ee(traj[::20], limb_name)
         ax1.plot(xyz_traj[:, 0], xyz_traj[:, 1], xyz_traj[:, 2])
         ax2.plot(xyz_traj[:, 0], xyz_traj[:, 1])
         ax3.plot(xyz_traj[:, 0], xyz_traj[:, 2])
@@ -69,13 +69,14 @@ def find_csv(trajectories_path: Path, recurrent: bool) -> Iterable[Path]:
     "TRAJECTORIES_PATH", type=click.Path(exists=True, file_okay=False, path_type=Path), default=Path("real_data")
 )
 @click.option("--recurrent", is_flag=True)
-def plot(trajectories_path: Path, recurrent: bool) -> None:
+@click.option("--limb", "limb_name", type=click.Choice(["left", "right"]), required=True)
+def plot(trajectories_path: Path, recurrent: bool, limb_name: str) -> None:
     dfs = [np.genfromtxt(f, delimiter=" ", skip_header=1) for f in find_csv(trajectories_path, recurrent)]
 
     from utils.pybullet import pybullet_context
 
     with pybullet_context():
-        plot_xyz_paths(dfs)
+        plot_xyz_paths(dfs, limb_name)
 
 
 @cli.command()
