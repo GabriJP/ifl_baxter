@@ -133,7 +133,7 @@ def cen(
 
     brnn_inv = BrnnModel(tx=25)
     brnn_inv.compile()
-    client = BrnnClient(brnn_inv, train_data, test_data)
+    client = BrnnClient(brnn_inv, train_data, test_data, online_cuts=False, online_additive=False)
 
     client.fit(None, dict(epochs=epochs, current_epoch=0, batch_size=batch_size))
     r2, _, mae_dict = client.evaluate()

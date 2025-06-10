@@ -10,6 +10,7 @@ import numpy as np
 import tensorflow as tf
 import wandb
 from flwr.client import NumPyClient
+from flwr.common import FitIns
 from flwr.common import NDArrays
 from flwr.common import Scalar
 from typing_extensions import override
@@ -23,12 +24,7 @@ from utils import idx_split_traj
 from utils import save_model_wandb
 from utils import sort_samples_inv
 from utils import Trajectory
-
-
-class FitConfig(TypedDict):
-    epochs: int
-    current_epoch: int
-    batch_size: int
+from utils.fed import FedProxLoss
 
 
 class EvalConfig(TypedDict):
@@ -52,23 +48,38 @@ def r_squared(y: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
 
 class BrnnClient(NumPyClient):
     def __init__(
-        self, model: models.BrnnModel, train_data: tuple[Trajectory, ...], test_data: tuple[Trajectory, ...]
+        self,
+        model: models.BrnnModel,
+        train_data: tuple[Trajectory, ...],
+        test_data: tuple[Trajectory, ...],
+        online_cuts: int,
+        online_additive: bool,
     ) -> None:
         super().__init__()
         self.model = model
         self.train_data = train_data
         self.test_data = test_data
+        self.online_cuts = online_cuts
+        self.online_additive = online_additive
+        self.current_fit = 0
 
-    def get_parameters(self, config: FitConfig) -> NDArrays:  # noqa: ARG002
+    def get_parameters(self, config: FitIns) -> NDArrays:  # noqa: ARG002
         return self.model.get_weights()
 
     def fit(
         self,
         parameters: NDArrays | None,
-        config: FitConfig,
+        config: FitIns,
     ) -> tuple[NDArrays, int, dict[str, Scalar]]:
+        if 0 < self.online_cuts <= self.current_fit + 1:
+            raise ValueError
+
         if parameters is not None:
             self.model.set_weights(parameters)
+
+        if isinstance(self.model.loss, FedProxLoss):
+            self.model.loss.update_initial_weights_and_mu(self.model, config.get("proximal_mu"))
+
         epochs, current_epoch, batch_size = config["epochs"], config["current_epoch"], config["batch_size"]
 
         step = 1
@@ -77,6 +88,15 @@ class BrnnClient(NumPyClient):
         mask_idx = idx_split_traj(long_traj, num_split=1)
 
         x_train, y_train, x_val, y_val = get_train_val(x, y, mask_idx[0])
+
+        if self.online_cuts > 0:
+            cut_len = len(x_train) // self.online_cuts
+            cut_slice = (
+                slice(0, cut_len * (self.current_fit + 1))
+                if self.online_additive
+                else slice(cut_len * self.current_fit, cut_len * (self.current_fit + 1))
+            )
+            x_train, y_train = x_train[cut_slice], y_train[cut_slice]
 
         callbacks = [
             WandbMetricsLogger(),
@@ -91,6 +111,7 @@ class BrnnClient(NumPyClient):
             verbose=2,
             callbacks=callbacks,
         )
+        self.current_fit += 1
         return self.get_parameters(config), sum(map(len, self.train_data)), self.train_data[0].descriptor_dict()
 
     def evaluate(
@@ -132,9 +153,14 @@ class BrnnClient(NumPyClient):
 
 class LightParallelClient(BrnnClient):
     def __init__(
-        self, model: models.BrnnModel, train_data: tuple[Trajectory, ...], test_data: tuple[Trajectory, ...]
+        self,
+        model: models.BrnnModel,
+        train_data: tuple[Trajectory, ...],
+        test_data: tuple[Trajectory, ...],
+        online_cuts: int,
+        online_additive: bool,
     ) -> None:
-        super().__init__(model, train_data, test_data)
+        super().__init__(model, train_data, test_data, online_cuts, online_additive)
         self.is_locked = False
 
     @contextmanager
@@ -160,7 +186,7 @@ class LightParallelClient(BrnnClient):
                 fcntl.flock(fd, fcntl.LOCK_UN)
 
     @override
-    def fit(self, parameters: NDArrays | None, config: FitConfig) -> tuple[NDArrays, int, dict[str, Scalar]]:
+    def fit(self, parameters: NDArrays | None, config: FitIns) -> tuple[NDArrays, int, dict[str, Scalar]]:
         with self.execution_exclusive_context():
             return super().fit(parameters, config)
 

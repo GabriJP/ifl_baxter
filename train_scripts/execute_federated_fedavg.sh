@@ -16,13 +16,13 @@ sleep "$(( JOB_ID % MODULO_N * MODULO_N ))"
 
 PORT=$(( JOB_ID + 8080 ))
 
-CLIENT_OPTS="xavier:${PORT} --wandb-project='${W_P}' --wandb-group='${GID}' --light"
+CLIENT_OPTS="xavier:${PORT} --wandb-project='${W_P}' --wandb-group='${GID}'"
 
 # shellcheck disable=SC2086
 readarray -t TRAIN_PATHS_OPT < <(ls -S ${DATA_PATH}/train/*csv)
 # shellcheck disable=SC2086
 readarray -t TEST_PATHS_OPT < <(ls -S ${DATA_PATH}/test/*csv)
-CLIENTS=('almogrote' 'almogrote' 'almogrote' 'gofio' 'gofio' 'citic')
+CLIENTS=('almogrote' 'almogrote' 'almogrote' 'almogrote' 'almogrote' 'gofio' 'gofio' 'gofio' 'gofio' 'platano' 'platano' 'platano' 'platano' 'citic' 'citic' 'citic')
 
 exec_client() {
   echo "Sending commands to ${CLIENT_NAME}"
@@ -46,7 +46,7 @@ EOC
 echo "Starting server"
 export LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgomp.so.1
 # shellcheck disable=SC2086
-nohup python3 fed.py server --port="${PORT}" --wandb-project="${W_P}" --wandb-group="${GID}" --num-rounds=$N_ROUNDS --epochs=$EPOCHS --batch-size=1024 --min-fit-clients=$MIN_FIT_CLIENTS --min-evaluate-clients=1 --min-available-clients=$MIN_CLIENTS >"${W_P}_${GID}_server.log" 2>&1 </dev/null &
+nohup python3 fed.py server --port="${PORT}" --wandb-project="${W_P}" --wandb-group="${GID}" --num-rounds=$N_ROUNDS --epochs=$EPOCHS --batch-size=1024 --min-fit-clients=$MIN_FIT_CLIENTS --min-evaluate-clients=1 --min-available-clients=$MIN_CLIENTS --strategy=fedavg >"${W_P}_${GID}_server.log" 2>&1 </dev/null &
 echo "Delay"
 sleep 25
 

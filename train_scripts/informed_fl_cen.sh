@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 
-export TF_FORCE_GPU_ALLOW_GROWTH=true
-
 N_CONCURRENT=5
 
+export TF_FORCE_GPU_ALLOW_GROWTH=true
 W_P="informed_fl"
 EPOCHS=500
 BATCH_SIZE=1024
-
 
 # All
 TEST_PATHS_OPT=(real_data/cut_t70/test/*csv)

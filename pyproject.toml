@@ -119,7 +119,7 @@ select = [
     # Ruff-specific rules
     "RUF",
 ]
-ignore = ["ISC001", "T201"]
+ignore = ["ISC001", "T201", "LOG015"]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
