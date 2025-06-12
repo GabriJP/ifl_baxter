@@ -1,5 +1,4 @@
 import logging
-import time
 from collections.abc import Callable
 from logging import INFO
 from pathlib import Path
@@ -17,14 +16,14 @@ from flwr.common.logger import log
 from flwr.server.strategy import FedAvg
 from flwr.server.strategy import FedProx
 
-from models import BrnnModel
+from models import BrnnTorch
 from utils import cli
 from utils import get_wandb_config_data
 from utils import load_gen_data
-from utils import save_model_wandb
-from utils.fed import BrnnClient
 from utils.fed import CubeStrategy
 from utils.fed import LightParallelClient
+from utils.fed import TorchClient
+from utils.losses import MSELoss
 
 
 @cli.command()
@@ -50,10 +49,7 @@ def client(
     light: bool,
     online_cuts: int,
     online_additive: bool,
-    fedprox_pmu: float,
 ) -> None:
-    time.sleep(5)
-
     wandb.init(
         project=wandb_project,
         entity="gabijp",
@@ -64,12 +60,12 @@ def client(
 
     train_data, test_data = load_gen_data((train_paths,), test_paths)
 
-    brnn_inv = BrnnModel(tx=25)
-    brnn_inv.compile(fedprox_pmu=fedprox_pmu)
-    brnn_inv.build()
+    loss_metric = MSELoss()
+
+    brnn_inv = BrnnTorch(tx=25, loss=loss_metric)
 
     # Choose and initialize client
-    fl_client = (LightParallelClient if light else BrnnClient)(
+    fl_client = (LightParallelClient if light else TorchClient)(
         brnn_inv, train_data, test_data, online_cuts, online_additive
     )
 
@@ -106,9 +102,7 @@ def on_evaluate_config_generator(n_rounds: int) -> Callable[[int], dict[str, Sca
 
 
 def savewb_evaluate_function_generator(total_server_rounds: int) -> Callable[[int, NDArrays, dict[str, Scalar]], None]:
-    brnn_inv = BrnnModel(tx=25)
-    brnn_inv.compile()
-    brnn_inv.build()
+    brnn_inv = BrnnTorch(tx=25, loss=MSELoss())
 
     # server_round starts at 1, so last one equals total_server_rounds
     def inner(server_round: int, parameters: NDArrays, _: dict[str, Scalar]) -> None:
@@ -117,7 +111,6 @@ def savewb_evaluate_function_generator(total_server_rounds: int) -> Callable[[in
         if total_server_rounds != server_round:
             return
         brnn_inv.set_weights(parameters)
-        save_model_wandb(brnn_inv)
 
     return inner
 

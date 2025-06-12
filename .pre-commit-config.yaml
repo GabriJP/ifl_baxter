@@ -27,7 +27,7 @@ repos:
     rev: v3.15.0
     hooks:
       - id: reorder-python-imports
-        args: [ --py310-plus ]
+        args: [ --py313-plus ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.11.13
@@ -42,7 +42,7 @@ repos:
     rev: v1.16.0
     hooks:
       - id: mypy
-        additional_dependencies: [ click, keras, numpy, types-requests, tensorflow<2.16, wandb ]
+        additional_dependencies: [ '--extra-index-url=https://download.pytorch.org/whl/cu128', click, keras, numpy, types-requests, torch, wandb ]
 
   - repo: local
     hooks:
@@ -53,6 +53,6 @@ repos:
         types: [ python ]
         pass_filenames: false
         verbose: true
-        additional_dependencies: [ click, flwr, keras, matplotlib, numpy, pybullet, scipy, tensorflow<2.16, tqdm, wandb ]
+        additional_dependencies: [ '--extra-index-url=https://download.pytorch.org/whl/cu128', click, flwr, keras, matplotlib, numpy, pybullet, scipy, torch, tqdm, wandb ]
 
 exclude: '^(.idea/|wandb/|data_generator/baxter_common)'

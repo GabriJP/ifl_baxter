@@ -26,7 +26,7 @@ def get_path_descriptor(array_angs: Iterable[F64_A]) -> tuple[F64_A, ...]:
     for array_ang in array_angs:
         xyz = []
         for ang in array_ang:
-            limb_baxter.reset_joints(ang)
+            limb_baxter.reset_joints(ang)  # type: ignore[arg-type]
             xyz_i = limb_baxter.get_ee_state()
             xyz.append(xyz_i)
 
@@ -163,7 +163,7 @@ def sort_samples(df: F64_A, max_len: int, step: int) -> tuple[F64_A, F64_A, list
     long_trajectories = []
 
     for tray in df:
-        x, y = sort_samples_forward(tray, max_len, step=step, offset=0)
+        x, y = sort_samples_forward(tray, max_len, step=step, offset=0)  # type: ignore[arg-type]
         x_pos_vel_torque.append(x)
         y_pos_vel_real.append(y)
         long_trajectories.append(x.shape[0])

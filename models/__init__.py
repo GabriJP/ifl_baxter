@@ -1,5 +1,5 @@
-from .brnn_keras import BrnnModel
+from .brnn_torch import BrnnTorch
 
 __all__ = [
-    "BrnnModel",
+    "BrnnTorch",
 ]

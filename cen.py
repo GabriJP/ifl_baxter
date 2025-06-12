@@ -8,14 +8,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import wandb
 
-from models import BrnnModel
+import models
 from utils import cli
 from utils import F64_A
 from utils import get_path_descriptor
 from utils import get_wandb_config_data
 from utils import load_gen_data
-from utils import save_model_wandb
-from utils.fed import BrnnClient
+from utils.fed import TorchClient
+from utils.losses import MSELoss
 
 logging.basicConfig(level=logging.INFO)
 
@@ -26,7 +26,7 @@ def get_xyz_ee(array_ang: F64_A, limb_name: str) -> F64_A:
     limb_baxter = rbd.limbs[limb_name]
     xyz = []
     for ang in array_ang:
-        limb_baxter.reset_joints(ang)
+        limb_baxter.reset_joints(ang)  # type: ignore[arg-type]
         xyz_i = limb_baxter.get_ee_state()
         xyz.append(xyz_i)
 
@@ -131,17 +131,14 @@ def cen(
 
     train_data, test_data = load_gen_data(train_paths, test_paths)
 
-    brnn_inv = BrnnModel(tx=25)
-    brnn_inv.compile()
-    client = BrnnClient(brnn_inv, train_data, test_data, online_cuts=False, online_additive=False)
+    brnn_inv = models.BrnnTorch(tx=25, loss=MSELoss())
+    client = TorchClient(brnn_inv, train_data, test_data, online_cuts=False, online_additive=False)
 
     client.fit(None, dict(epochs=epochs, current_epoch=0, batch_size=batch_size))
     r2, _, mae_dict = client.evaluate()
 
     logging.info("R2: %s", r2)
     logging.info("MAEs: %s", mae_dict)
-
-    save_model_wandb(brnn_inv)
 
 
 if __name__ == "__main__":
