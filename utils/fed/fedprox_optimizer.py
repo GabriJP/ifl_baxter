@@ -9,7 +9,7 @@ class FedProxLoss(losses.Loss):
         self.base_loss = base_loss
         self.model = model
         self.proximal_mu_half = 0.0
-        self.initial_params = model.get_weights()
+        self.initial_params: list[tf.Tensor] = list()
 
     def update_initial_weights_and_mu(self, model: keras.Model, proximal_mu: float) -> None:
         self.initial_params = model.get_weights()
