@@ -78,7 +78,7 @@ class BrnnClient(NumPyClient):
             self.model.set_weights(parameters)
 
         if isinstance(self.model.loss, FedProxLoss):
-            self.model.loss.update_initial_weights(self.model, config.get("proximal_mu"))
+            self.model.loss.update_initial_weights_and_mu(self.model, config.get("proximal_mu"))
 
         epochs, current_epoch, batch_size = config["epochs"], config["current_epoch"], config["batch_size"]
 
