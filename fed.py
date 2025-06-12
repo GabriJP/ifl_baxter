@@ -39,6 +39,7 @@ from utils.fed import LightParallelClient
 @click.option("--light", is_flag=True)
 @click.option("--online-cuts", type=click.IntRange(min=0), default=0)
 @click.option("--online-additive", is_flag=True)
+@click.option("--fedprox-pmu", type=click.FloatRange(0.0, 1.0, min_open=True), default=0.0)
 def client(
     server_address: str,
     wandb_project: str,
@@ -49,6 +50,7 @@ def client(
     light: bool,
     online_cuts: int,
     online_additive: bool,
+    fedprox_pmu: float,
 ) -> None:
     time.sleep(5)
 
@@ -63,7 +65,7 @@ def client(
     train_data, test_data = load_gen_data((train_paths,), test_paths)
 
     brnn_inv = BrnnModel(tx=25)
-    brnn_inv.compile()
+    brnn_inv.compile(fedprox_pmu=fedprox_pmu)
     brnn_inv.build()
 
     # Choose and initialize client
@@ -188,6 +190,7 @@ def server(
             min_evaluate_clients=min_evaluate_clients,
             min_available_clients=min_available_clients,
             agg=strategy,
+            fedprox_pmu=fedprox_pmu,
         ),
     )
 

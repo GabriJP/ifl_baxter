@@ -3,7 +3,7 @@
 export TF_FORCE_GPU_ALLOW_GROWTH=true
 
 W_P=${1:-"informed_fl"}
-GID=${2:-"fedavg"}
+GID=${2:-"fedcube_q"}
 DATA_PATH=${3:-"real_data/cut_t70"}
 N_ROUNDS=${4:-"500"}
 EPOCHS=${5:-"10"}
@@ -46,7 +46,7 @@ EOC
 echo "Starting server"
 export LD_PRELOAD=/usr/lib/aarch64-linux-gnu/libgomp.so.1
 # shellcheck disable=SC2086
-nohup python3 fed.py server --port="${PORT}" --wandb-project="${W_P}" --wandb-group="${GID}" --num-rounds=$N_ROUNDS --epochs=$EPOCHS --batch-size=1024 --min-fit-clients=$MIN_FIT_CLIENTS --min-evaluate-clients=1 --min-available-clients=$MIN_CLIENTS --cube --quantity >"${W_P}_${GID}_server.log" 2>&1 </dev/null &
+nohup python3 fed.py server --port="${PORT}" --wandb-project="${W_P}" --wandb-group="${GID}" --num-rounds=$N_ROUNDS --epochs=$EPOCHS --batch-size=1024 --min-fit-clients=$MIN_FIT_CLIENTS --min-evaluate-clients=1 --min-available-clients=$MIN_CLIENTS --strategy=fedcube_q >"${W_P}_${GID}_server.log" 2>&1 </dev/null &
 echo "Delay"
 sleep 25
 

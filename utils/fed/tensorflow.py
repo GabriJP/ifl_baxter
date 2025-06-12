@@ -10,6 +10,7 @@ import numpy as np
 import tensorflow as tf
 import wandb
 from flwr.client import NumPyClient
+from flwr.common import FitIns
 from flwr.common import NDArrays
 from flwr.common import Scalar
 from typing_extensions import override
@@ -23,12 +24,7 @@ from utils import idx_split_traj
 from utils import save_model_wandb
 from utils import sort_samples_inv
 from utils import Trajectory
-
-
-class FitConfig(TypedDict):
-    epochs: int
-    current_epoch: int
-    batch_size: int
+from utils.fed import FedProxLoss
 
 
 class EvalConfig(TypedDict):
@@ -67,19 +63,23 @@ class BrnnClient(NumPyClient):
         self.online_additive = online_additive
         self.current_fit = 0
 
-    def get_parameters(self, config: FitConfig) -> NDArrays:  # noqa: ARG002
+    def get_parameters(self, config: FitIns) -> NDArrays:  # noqa: ARG002
         return self.model.get_weights()
 
     def fit(
         self,
         parameters: NDArrays | None,
-        config: FitConfig,
+        config: FitIns,
     ) -> tuple[NDArrays, int, dict[str, Scalar]]:
         if 0 < self.online_cuts <= self.current_fit + 1:
             raise ValueError
 
         if parameters is not None:
             self.model.set_weights(parameters)
+
+        if isinstance(self.model.loss, FedProxLoss):
+            self.model.loss.update_initial_weights(self.model, config.get("proximal_mu"))
+
         epochs, current_epoch, batch_size = config["epochs"], config["current_epoch"], config["batch_size"]
 
         step = 1
@@ -186,7 +186,7 @@ class LightParallelClient(BrnnClient):
                 fcntl.flock(fd, fcntl.LOCK_UN)
 
     @override
-    def fit(self, parameters: NDArrays | None, config: FitConfig) -> tuple[NDArrays, int, dict[str, Scalar]]:
+    def fit(self, parameters: NDArrays | None, config: FitIns) -> tuple[NDArrays, int, dict[str, Scalar]]:
         with self.execution_exclusive_context():
             return super().fit(parameters, config)
 

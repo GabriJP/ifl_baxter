@@ -25,6 +25,7 @@ class BrnnModel(keras.Model):
         self.rnn_back = keras.layers.GRU(n_a, go_backwards=True, name="rnn_back")
         self.concat = keras.layers.Concatenate()
         self.densor = keras.layers.Dense(units=n_values, name="densor_out")
+        self.loss = keras.losses.MeanSquaredError()
 
     @property
     def default_input_shape(self) -> tuple[None, int, int]:
@@ -44,8 +45,16 @@ class BrnnModel(keras.Model):
         return keras.Model(inputs=[x], outputs=self.call(x))
 
     def compile(self, **kwargs: Any) -> None:
+        self.loss = keras.losses.MeanSquaredError()
+
+        fedprox_pmu = kwargs.pop("fedprox_pmu", 0.0)
+        if fedprox_pmu > 0.0:
+            from utils.fed import FedProxLoss
+
+            self.loss = FedProxLoss(self.loss, self)
+
         opts = dict(
-            loss=keras.losses.MeanSquaredError(),
+            loss=self.loss,
             optimizer=keras.optimizers.Adam(learning_rate=0.001),
         )
         opts.update(kwargs)
