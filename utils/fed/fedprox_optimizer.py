@@ -15,6 +15,7 @@ class FedProxLoss(losses.Loss):
         self.initial_params = model.get_weights()
         self.proximal_mu_half = proximal_mu / 2
 
+    @tf.function
     def call(self, y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
         loss = self.base_loss(y_true, y_pred)
 
