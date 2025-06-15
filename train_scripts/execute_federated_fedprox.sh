@@ -23,7 +23,7 @@ CLIENT_OPTS="xavier:${PORT} --wandb-project='${W_P}' --wandb-group='${GID}' --fe
 readarray -t TRAIN_PATHS_OPT < <(ls -S ${DATA_PATH}/train/*csv)
 # shellcheck disable=SC2086
 readarray -t TEST_PATHS_OPT < <(ls -S ${DATA_PATH}/test/*csv)
-CLIENTS=('almogrote' 'almogrote' 'almogrote' 'gofio' 'gofio' 'citic')
+CLIENTS=('almogrote' 'almogrote' 'almogrote' 'gofio' 'gofio' 'platano' 'platano')
 
 exec_client() {
   echo "Sending commands to ${CLIENT_NAME}"
@@ -32,8 +32,8 @@ exec_client() {
 cd "\${HOME}/ifl_baxter" || exit
 export PATH="\${HOME}/miniconda3/condabin:$PATH"
 eval "\$(conda shell.bash hook)"
-conda activate baxter_keras || exit
-export FLWR_TELEMETRY_ENABLED=0 TF_FORCE_GPU_ALLOW_GROWTH=true
+conda activate baxter_torch || exit
+export FLWR_TELEMETRY_ENABLED=0 TF_FORCE_GPU_ALLOW_GROWTH=true KERAS_BACKEND=torch
 
 for TRAIN_PATH_CLIENT in ${TRAIN_PATHS[@]}; do
   TRAIN_NAME="\$(basename "\$TRAIN_PATH_CLIENT")"

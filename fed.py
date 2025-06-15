@@ -8,6 +8,7 @@ from typing import TypedDict
 
 import click
 import flwr as fl
+import numpy as np
 import wandb
 from flwr.common import Metrics
 from flwr.common import MetricsAggregationFn
@@ -65,7 +66,7 @@ def client(
     train_data, test_data = load_gen_data((train_paths,), test_paths)
 
     brnn_inv = BrnnModel(tx=25)
-    brnn_inv.compile(fedprox_pmu=fedprox_pmu)
+    brnn_inv.compile(proximal_mu=fedprox_pmu)
     brnn_inv.build()
 
     # Choose and initialize client
@@ -109,6 +110,7 @@ def savewb_evaluate_function_generator(total_server_rounds: int) -> Callable[[in
     brnn_inv = BrnnModel(tx=25)
     brnn_inv.compile()
     brnn_inv.build()
+    brnn_inv.predict(np.zeros((32, 25, 14), dtype=np.float32))
 
     # server_round starts at 1, so last one equals total_server_rounds
     def inner(server_round: int, parameters: NDArrays, _: dict[str, Scalar]) -> None:

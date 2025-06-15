@@ -126,5 +126,5 @@ dmypy.json
 .idea
 real_data
 wandb
-
+*.keras
 telegram.yml

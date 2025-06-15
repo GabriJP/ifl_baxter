@@ -42,17 +42,17 @@ repos:
     rev: v1.16.0
     hooks:
       - id: mypy
-        additional_dependencies: [ click, keras, numpy, types-requests, tensorflow<2.16, wandb ]
+        additional_dependencies: [ "--extra-index-url=https://download.pytorch.org/whl/cu126", click, keras, numpy, types-requests, tensorflow<2.17, torch<2.7, wandb ]
 
   - repo: local
     hooks:
       - id: unittest
         name: unittest
-        entry: env TF_CPP_MIN_LOG_LEVEL=3 python -m unittest discover -s tests
+        entry: env TF_CPP_MIN_LOG_LEVEL=3 KERAS_BACKEND=torch python -m unittest discover -s tests
         language: python
         types: [ python ]
         pass_filenames: false
         verbose: true
-        additional_dependencies: [ click, flwr, keras, matplotlib, numpy, pybullet, scipy, tensorflow<2.16, tqdm, wandb ]
+        additional_dependencies: [ "--extra-index-url=https://download.pytorch.org/whl/cu126", click, flwr, keras, matplotlib, numpy, pybullet, scipy, tensorflow<2.17, torch<2.7, tqdm, wandb ]
 
 exclude: '^(.idea/|wandb/|data_generator/baxter_common)'

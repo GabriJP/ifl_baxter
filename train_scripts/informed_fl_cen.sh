@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export TF_FORCE_GPU_ALLOW_GROWTH=true
+export KERAS_BACKEND=torch
 
 N_CONCURRENT=5
 

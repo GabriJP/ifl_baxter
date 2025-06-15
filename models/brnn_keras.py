@@ -1,7 +1,10 @@
 from typing import Any
+from typing import TYPE_CHECKING
 
 import keras
-from keras.src.engine.keras_tensor import KerasTensor
+
+if TYPE_CHECKING:
+    from keras.src.engine.keras_tensor import KerasTensor
 
 
 @keras.utils.register_keras_serializable()
@@ -47,7 +50,7 @@ class BrnnModel(keras.Model):
     def compile(self, **kwargs: Any) -> None:
         self.loss = keras.losses.MeanSquaredError()
 
-        fedprox_pmu = kwargs.pop("fedprox_pmu", 0.0)
+        fedprox_pmu = kwargs.pop("proximal_mu", 0.0)
         if fedprox_pmu > 0.0:
             from utils.fed import FedProxLoss
 
@@ -64,7 +67,7 @@ class BrnnModel(keras.Model):
     def get_config(self) -> dict[str, Any]:
         return super().get_config() | self.config
 
-    def call(self, inputs: Any, **_: Any) -> KerasTensor:
+    def call(self, inputs: Any, **_: Any) -> "KerasTensor":
         # Split data
         # None, 25, 14 -> None, 13, 14
         forw = self.x_start2mid(inputs)

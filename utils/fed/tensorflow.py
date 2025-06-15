@@ -7,7 +7,6 @@ from time import perf_counter
 from typing import TypedDict
 
 import numpy as np
-import tensorflow as tf
 import wandb
 from flwr.client import NumPyClient
 from flwr.common import FitIns
@@ -31,19 +30,19 @@ class EvalConfig(TypedDict):
     do_eval: bool
 
 
-def calc_performance(y: F64_A, y_hat: tf.Tensor) -> tuple[F64_A, tf.Tensor]:
-    r2 = r_squared(tf.convert_to_tensor(y), y_hat)
+def calc_performance(y: F64_A, y_hat: F64_A) -> tuple[F64_A, float]:
+    r2 = r_squared(y, y_hat)
 
-    y_error = denorm_max_min(y) - denorm_max_min(np.zeros(shape=tuple(y_hat.shape)) + y_hat)
+    y_error = denorm_max_min(y) - denorm_max_min(y_hat)
     mae_joint = np.mean(np.abs(y_error), axis=0)
 
     return mae_joint, r2
 
 
-def r_squared(y: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
-    residual = tf.reduce_sum(tf.square(tf.subtract(y, y_pred)))
-    total = tf.reduce_sum(tf.square(tf.subtract(y, tf.reduce_mean(y))))
-    return tf.subtract(1.0, tf.divide(residual, total))
+def r_squared(y: F64_A, y_pred: F64_A) -> float:
+    residual = np.sum(np.square(np.subtract(y, y_pred)))
+    total = np.sum(np.square(np.subtract(y, np.mean(y))))
+    return float(np.subtract(1.0, np.divide(residual, total)))
 
 
 class BrnnClient(NumPyClient):
@@ -74,13 +73,17 @@ class BrnnClient(NumPyClient):
         if 0 < self.online_cuts <= self.current_fit + 1:
             raise ValueError
 
-        if parameters is not None:
+        epochs, current_epoch, batch_size = config["epochs"], config["current_epoch"], config["batch_size"]
+
+        if not len(self.model.get_weights()):
+            model_config = self.model.get_config()
+            self.model.predict(np.zeros((batch_size, model_config["tx"], model_config["n_features"])))
+
+        if parameters is not None and len(parameters):
             self.model.set_weights(parameters)
 
         if isinstance(self.model.loss, FedProxLoss):
-            self.model.loss.update_initial_weights_and_mu(self.model, config.get("proximal_mu"))
-
-        epochs, current_epoch, batch_size = config["epochs"], config["current_epoch"], config["batch_size"]
+            self.model.loss.update_weights_and_mu(config.get("proximal_mu"))
 
         step = 1
         x, y, long_traj = sort_samples_inv(self.train_data, self.model.config["tx"], step)
@@ -101,6 +104,7 @@ class BrnnClient(NumPyClient):
         callbacks = [
             WandbMetricsLogger(),
         ]
+
         self.model.fit(
             x_train,
             y_train,
@@ -119,6 +123,10 @@ class BrnnClient(NumPyClient):
         parameters: NDArrays | None = None,
         config: EvalConfig | None = None,
     ) -> tuple[float, int, dict[str, Scalar]]:
+        if not len(self.model.get_weights()):
+            model_config = self.model.get_config()
+            self.model.predict(np.zeros((1024, model_config["tx"], model_config["n_features"])))
+
         if parameters is not None:
             self.model.set_weights(parameters)
 
@@ -133,13 +141,12 @@ class BrnnClient(NumPyClient):
 
         y_hat = self.model.predict(x)
 
-        mae_joint, r2 = calc_performance(y, y_hat)
-        metrics_dict = dict(
+        mae_joint, r2 = calc_performance(y, np.asarray(y_hat))
+        metrics_dict: dict[str, float | bool] = dict(
             zip(("mae_s0", "mae_s1", "mae_e0", "mae_e1", "mae_w0", "mae_w1", "mae_w2"), mae_joint, strict=True)
         )
-        r2_float = float(r2.numpy())
 
-        metrics_dict.update(r2=r2_float, mae_mean=float(np.mean(mae_joint)))
+        metrics_dict.update(r2=r2, mae_mean=float(np.mean(mae_joint)))
 
         # If centralized
         if config is None:
@@ -148,7 +155,7 @@ class BrnnClient(NumPyClient):
 
         metrics_dict["do_eval"] = do_eval
 
-        return r2_float, sum(map(len, self.test_data)), metrics_dict
+        return r2, sum(map(len, self.test_data)), metrics_dict
 
 
 class LightParallelClient(BrnnClient):
