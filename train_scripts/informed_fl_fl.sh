@@ -10,7 +10,7 @@ MIN_FIT_CLIENTS=4
 
 W_P="informed_fl"
 
-CLIENTS=('almogrote' 'gofio' 'platano' 'citic')
+CLIENTS=('almogrote' 'gofio' 'platano')
 for CLIENT_NAME in "${CLIENTS[@]}"; do
   echo "Updating repo on ${CLIENT_NAME}"
   ssh "$CLIENT_NAME" bash <<EOC
