@@ -17,13 +17,13 @@ sleep "$(( JOB_ID % MODULO_N * MODULO_N ))"
 
 PORT=$(( JOB_ID + 8080 ))
 
-CLIENT_OPTS="xavier:${PORT} --wandb-project='${W_P}' --wandb-group='${GID}' --fedprox-pmu=${FEDPROX_PMU} --light"
+CLIENT_OPTS="xavier:${PORT} --wandb-project='${W_P}' --wandb-group='${GID}' --fedprox-pmu=${FEDPROX_PMU}"
 
 # shellcheck disable=SC2086
 readarray -t TRAIN_PATHS_OPT < <(ls -S ${DATA_PATH}/train/*csv)
 # shellcheck disable=SC2086
 readarray -t TEST_PATHS_OPT < <(ls -S ${DATA_PATH}/test/*csv)
-CLIENTS=('almogrote' 'almogrote' 'almogrote' 'gofio' 'gofio' 'platano' 'platano')
+CLIENTS=('almogrote' 'almogrote' 'almogrote' 'gofio' 'gofio' 'platano' 'platano' 'citic')
 
 exec_client() {
   echo "Sending commands to ${CLIENT_NAME}"
