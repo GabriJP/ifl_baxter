@@ -23,7 +23,7 @@ CLIENT_OPTS="xavier:${PORT} --wandb-project='${W_P}' --wandb-group='${GID}' --fe
 readarray -t TRAIN_PATHS_OPT < <(ls -S ${DATA_PATH}/train/*csv)
 # shellcheck disable=SC2086
 readarray -t TEST_PATHS_OPT < <(ls -S ${DATA_PATH}/test/*csv)
-CLIENTS=('almogrote' 'almogrote' 'almogrote' 'gofio' 'gofio' 'platano' 'platano' 'citic')
+CLIENTS=('almogrote' 'almogrote' 'almogrote' 'almogrote' 'gofio' 'gofio' 'gofio' 'platano' 'platano' 'platano' 'citic' 'citic')
 
 exec_client() {
   echo "Sending commands to ${CLIENT_NAME}"
