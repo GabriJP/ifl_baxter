@@ -165,7 +165,7 @@ class StrategyCommonOpts(TypedDict):
 @click.option("--min-evaluate-clients", type=click.IntRange(0), default=2)
 @click.option("--min-available-clients", type=click.IntRange(1), default=2)
 @click.option("--strategy", type=click.Choice(["fedavg", "fedcube_q", "fedcube_noq", "fedprox"]))
-@click.option("--fedprox-pmu", type=click.FloatRange(0.0, 1.0, min_open=True), default=0.0)
+@click.option("--fedprox-pmu", type=click.FloatRange(0.0, min_open=True), default=0.0)
 def server(
     port: int,
     wandb_project: str,

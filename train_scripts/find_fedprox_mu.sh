@@ -2,7 +2,7 @@
 
 export KERAS_BACKEND=torch
 
-N_CONCURRENT=5
+N_CONCURRENT=3
 
 N_ROUNDS=500
 EPOCHS=10
@@ -23,7 +23,7 @@ done
 # All
 MIN_CLIENTS=$(( $(ls real_data/cut_t70/train | wc -l) >> 1 ))
 DATA_NAME='cut_t70'
-for MU in 0.25 0.5 0.75 1.0 1.25
+for MU in 0.25 0.5 0.75 1.0
 do
-  printf %s\\n {1..3} | xargs -t -I @ -P "${N_CONCURRENT}" -n 1 train_scripts/execute_federated_fedprox.sh "$W_P" "fedprox_${MU}_${DATA_NAME}_all" "real_data/${DATA_NAME}" $N_ROUNDS $EPOCHS $MIN_CLIENTS $MIN_FIT_CLIENTS '@' "${N_CONCURRENT}" ${MU}
+  printf %s\\n {1..9} | xargs -t -I @ -P "${N_CONCURRENT}" -n 1 train_scripts/execute_federated_fedprox.sh "$W_P" "fedprox_${MU}_${DATA_NAME}_all" "real_data/${DATA_NAME}" $N_ROUNDS $EPOCHS $MIN_CLIENTS $MIN_FIT_CLIENTS '@' "${N_CONCURRENT}" ${MU}
 done
