@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from typing import Final
 from typing import TYPE_CHECKING
@@ -24,12 +26,12 @@ class FedProxLoss(losses.Loss):
         self.initial_params = self.model.get_weights()
         self.proximal_mu_half = proximal_mu / 2
 
-    def call(self, y_true: "KerasTensor", y_pred: "KerasTensor") -> "KerasTensor":
+    def call(self, y_true: KerasTensor, y_pred: KerasTensor) -> KerasTensor:
         loss = self.base_loss(y_true, y_pred)
 
         proximal_loss = 0.0
         current_weights = self.model.get_weights()
-        for initial_weight, current_weight in zip(self.initial_params, current_weights, strict=False):
+        for initial_weight, current_weight in zip(self.initial_params, current_weights):
             proximal_loss += keras.ops.sqrt(keras.ops.sum(keras.ops.square(initial_weight - current_weight)))
 
         txt_logget_msg = f"FedProxLoss. loss: {loss}, proximal_loss: {proximal_loss}"

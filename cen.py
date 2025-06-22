@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import logging
 import pickle
-from collections.abc import Iterable
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import click
 import matplotlib.pyplot as plt
@@ -16,6 +18,9 @@ from utils import get_wandb_config_data
 from utils import load_gen_data
 from utils import save_model_wandb
 from utils.fed import BrnnClient
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 logging.basicConfig(level=logging.INFO)
 
@@ -90,7 +95,7 @@ def describe(trajectories_path: Path) -> None:
     with pybullet_context():
         descriptors = get_path_descriptor(paths)
 
-    for trajectory_path, descriptor in zip(trajectory_paths, descriptors, strict=False):
+    for trajectory_path, descriptor in zip(trajectory_paths, descriptors):
         with trajectory_path.with_suffix(".npy").open("wb") as f:
             pickle.dump(descriptor, f)
 

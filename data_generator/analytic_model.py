@@ -1,12 +1,17 @@
-from functools import cache
+from __future__ import annotations
+
+from functools import lru_cache
 from typing import Literal
 from typing import overload
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pybullet as p
 
-from utils import F64_A
-from utils import Number
+
+if TYPE_CHECKING:
+    from utils import Number
+    from utils import F64_A
 
 model_left = "data_generator/baxter_common/baxter_description/urdf/baxter_left_no_gripper.urdf"
 model_right = "data_generator/baxter_common/baxter_description/urdf/baxter_right_no_gripper.urdf"
@@ -34,14 +39,14 @@ class Limb:
             self._joint_names = ["right_s0", "right_s1", "right_e0", "right_e1", "right_w0", "right_w1", "right_w2"]
 
         # Real2Sim conversions
-        self._name_2_idx_dof = dict(zip(self._joint_names, self.joint_idx_dof, strict=False))
-        self._idx_2_name = dict(zip(self.joint_idx_dof, self._joint_names, strict=False))
+        self._name_2_idx_dof = dict(zip(self._joint_names, self.joint_idx_dof))
+        self._idx_2_name = dict(zip(self.joint_idx_dof, self._joint_names))
 
         for i, j in enumerate(self.joint_indices):
             p.changeDynamics(self.baxter_id, j, maxJointVelocity=max_joint_velocity[i])
 
     @property
-    @cache  # noqa: B019
+    @lru_cache(1)  # noqa: B019
     def baxter_id(self) -> int:
         if self.name == "left":
             path_model = model_left
@@ -76,7 +81,7 @@ class Limb:
         return torque[self.joint_idx_dof]
 
     def get_torque_traj(self, pos: F64_A, vel: F64_A, acl: F64_A) -> F64_A:
-        return np.array([self.inv_dyn(*pva) for pva in zip(pos, vel, acl, strict=False)])
+        return np.array([self.inv_dyn(*pva) for pva in zip(pos, vel, acl)])
 
     def reset_joints(self, ang_joint: F64_A, vel_joint: F64_A | None = None) -> F64_A:
         if vel_joint is None:
@@ -106,7 +111,7 @@ class Limb:
         p.stepSimulation()
         new_state = p.getJointStates(self.baxter_id, self.joint_indices)
         pos_vel = np.empty((7, 2))
-        for joint_i, joint_i_state in zip(pos_vel, new_state, strict=False):
+        for joint_i, joint_i_state in zip(pos_vel, new_state):
             joint_i[:] = [joint_i_state[0], joint_i_state[1]]
 
         # Read Sensor States:

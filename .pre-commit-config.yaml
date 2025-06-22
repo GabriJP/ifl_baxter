@@ -27,14 +27,14 @@ repos:
     rev: v3.15.0
     hooks:
       - id: reorder-python-imports
-        args: [ --py310-plus ]
+        args: [ --py38-plus ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.0
     hooks:
       # Run the linter.
       - id: ruff-check
-        args: [ --fix ]
+        args: [ --fix, --unsafe-fixes ]
       # Run the formatter.
       - id: ruff-format
 

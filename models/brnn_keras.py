@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 from typing import TYPE_CHECKING
 
@@ -67,7 +69,7 @@ class BrnnModel(keras.Model):
     def get_config(self) -> dict[str, Any]:
         return super().get_config() | self.config
 
-    def call(self, inputs: Any, **_: Any) -> "KerasTensor":
+    def call(self, inputs: Any, **_: Any) -> KerasTensor:
         # Split data
         # None, 25, 14 -> None, 13, 14
         forw = self.x_start2mid(inputs)

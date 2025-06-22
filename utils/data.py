@@ -1,13 +1,20 @@
+from __future__ import annotations
+
 import logging
-from collections.abc import Iterable
-from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
+from typing import Union
 
 import numpy as np
 import numpy.typing as npt
 from scipy import signal
+from typing_extensions import TypeAlias
 
-Number = int | float
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from collections.abc import Iterable
+
+Number: TypeAlias = Union[int, float]
 F64_A = npt.NDArray[np.float64]
 
 lim_max = np.array([1.7016, 1.047, 3.0541, 2.618, 3.059, 2.094, 3.059] + [2] * 4 + [4] * 3 + [50] * 4 + [15] * 3)
@@ -52,8 +59,8 @@ class Trajectory:
         ]
         return {
             name: coord
-            for names, point in zip(descriptor_names, self.descriptor.tolist(), strict=False)
-            for name, coord in zip(names, point, strict=False)
+            for names, point in zip(descriptor_names, self.descriptor.tolist())
+            for name, coord in zip(names, point)
         }
 
 
@@ -182,7 +189,7 @@ def idx_split_traj(
         long_div = int(long_traj * ratio_val)
         idx_end = idx_cut + long_div
 
-        for n_split, (id_c, id_e) in enumerate(zip(idx_cut, idx_end, strict=False)):
+        for n_split, (id_c, id_e) in enumerate(zip(idx_cut, idx_end)):
             logging.info("%s %s %s", n_split, id_c, id_e)
             if id_e >= long_traj:
                 mask_idx[n_split, id_c:] = True

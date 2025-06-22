@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import itertools
-from collections.abc import Callable
 from functools import reduce
 from logging import WARNING
+from typing import Tuple
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -13,11 +16,14 @@ from flwr.common import ndarrays_to_parameters
 from flwr.common import Parameters
 from flwr.common import parameters_to_ndarrays
 from flwr.common import Scalar
-from flwr.server.client_proxy import ClientProxy
 from flwr.server.strategy import FedAvg
 
+if TYPE_CHECKING:
+    from flwr.server.client_proxy import ClientProxy
+    from collections.abc import Callable
+
 F64_A = npt.NDArray[np.float64]
-COORDINATE = tuple[float, float, float]
+COORDINATE = Tuple[float, float, float]
 
 
 class Cube:
@@ -44,11 +50,11 @@ class Cube:
         return isinstance(other, Cube) and (self.descriptor == other.descriptor).all()
 
     @classmethod
-    def from_tuples(cls, point_a: COORDINATE, point_b: COORDINATE) -> "Cube":
+    def from_tuples(cls, point_a: COORDINATE, point_b: COORDINATE) -> Cube:
         return cls(np.stack([np.array(point_a), np.array(point_b)]))
 
     @classmethod
-    def from_fit_res(cls, fit_res: FitRes) -> "Cube":
+    def from_fit_res(cls, fit_res: FitRes) -> Cube:
         metrics = fit_res.metrics
         a_0, a_1, a_2 = metrics.pop("a_0"), metrics.pop("a_1"), metrics.pop("a_2")
         b_0, b_1, b_2 = metrics.pop("b_0"), metrics.pop("b_1"), metrics.pop("b_2")
@@ -66,12 +72,12 @@ class Cube:
         )
         return tuple(map(tuple, all_points))
 
-    def intersects(self, other: "Cube") -> bool:
-        return all(b > a for b, a in zip(self.descriptor[1], other.descriptor[0], strict=False)) and all(
-            a < b for a, b in zip(self.descriptor[0], other.descriptor[1], strict=False)
+    def intersects(self, other: Cube) -> bool:
+        return all(b > a for b, a in zip(self.descriptor[1], other.descriptor[0])) and all(
+            a < b for a, b in zip(self.descriptor[0], other.descriptor[1])
         )
 
-    def intersection_cube(self, other: "Cube") -> "Cube":
+    def intersection_cube(self, other: Cube) -> Cube:
         if not self.intersects(other):
             msg = "There is no intersection"
             raise ValueError(msg)
@@ -123,9 +129,7 @@ def aggregate(results: list[tuple[NDArrays, int, Cube]], q: bool) -> NDArrays:
     total_divide = sum((num_examples if q else 1.0) * norm_traj_weights[cube] for _, num_examples, cube in results)
 
     # Compute average weights of each layer
-    weights_prime: NDArrays = [
-        reduce(np.add, layer_updates) / total_divide for layer_updates in zip(*weighted_weights, strict=False)
-    ]
+    weights_prime: NDArrays = [reduce(np.add, layer_updates) / total_divide for layer_updates in zip(*weighted_weights)]
     return weights_prime
 
 

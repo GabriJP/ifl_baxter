@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 import pickle
-from collections.abc import Sequence
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from . import F64_A
 from . import Trajectory
+
+if TYPE_CHECKING:
+    from pathlib import Path
+    from collections.abc import Sequence
 
 
 def load_trajectory(trajectory_paths: Sequence[Path]) -> tuple[Trajectory, ...]:
@@ -18,8 +23,7 @@ def load_trajectory(trajectory_paths: Sequence[Path]) -> tuple[Trajectory, ...]:
             descriptors.append(pickle.load(f))
 
     return tuple(
-        Trajectory(t_p.stem, descriptor, path)
-        for t_p, descriptor, path in zip(trajectory_paths, descriptors, paths, strict=False)
+        Trajectory(t_p.stem, descriptor, path) for t_p, descriptor, path in zip(trajectory_paths, descriptors, paths)
     )
 
 

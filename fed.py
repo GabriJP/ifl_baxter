@@ -1,19 +1,17 @@
+from __future__ import annotations
+
 import logging
 import time
-from collections.abc import Callable
 from logging import INFO
 from pathlib import Path
 from statistics import mean
+from typing import TYPE_CHECKING
 from typing import TypedDict
 
 import click
 import flwr as fl
 import numpy as np
 import wandb
-from flwr.common import Metrics
-from flwr.common import MetricsAggregationFn
-from flwr.common import NDArrays
-from flwr.common import Scalar
 from flwr.common.logger import log
 from flwr.server.strategy import FedAvg
 from flwr.server.strategy import FedProx
@@ -26,6 +24,13 @@ from utils import save_model_wandb
 from utils.fed import BrnnClient
 from utils.fed import CubeStrategy
 from utils.fed import LightParallelClient
+
+if TYPE_CHECKING:
+    from flwr.common import Metrics
+    from flwr.common import Scalar
+    from flwr.common import MetricsAggregationFn
+    from flwr.common import NDArrays
+    from collections.abc import Callable
 
 
 @cli.command()

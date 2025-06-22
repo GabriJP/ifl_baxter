@@ -1,21 +1,19 @@
+from __future__ import annotations
+
 import fcntl
 import logging
-from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from time import perf_counter
+from typing import TYPE_CHECKING
 from typing import TypedDict
 
 import numpy as np
 import wandb
 from flwr.client import NumPyClient
-from flwr.common import FitIns
-from flwr.common import NDArrays
-from flwr.common import Scalar
 from typing_extensions import override
 from wandb.integration.keras import WandbMetricsLogger
 
-import models
 from utils import denorm_max_min
 from utils import F64_A
 from utils import get_train_val
@@ -24,6 +22,13 @@ from utils import save_model_wandb
 from utils import sort_samples_inv
 from utils import Trajectory
 from utils.fed import FedProxLoss
+
+if TYPE_CHECKING:
+    from flwr.common import Scalar
+    import models
+    from flwr.common import NDArrays
+    from flwr.common import FitIns
+    from collections.abc import Iterator
 
 
 class EvalConfig(TypedDict):
@@ -143,7 +148,7 @@ class BrnnClient(NumPyClient):
 
         mae_joint, r2 = calc_performance(y, np.asarray(y_hat))
         metrics_dict: dict[str, float | bool] = dict(
-            zip(("mae_s0", "mae_s1", "mae_e0", "mae_e1", "mae_w0", "mae_w1", "mae_w2"), mae_joint, strict=True)
+            zip(("mae_s0", "mae_s1", "mae_e0", "mae_e1", "mae_w0", "mae_w1", "mae_w2"), mae_joint)
         )
 
         metrics_dict.update(r2=r2, mae_mean=float(np.mean(mae_joint)))

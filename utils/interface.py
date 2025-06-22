@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 import logging
 from pathlib import Path
 from typing import Final
+from typing import TYPE_CHECKING
 
 import click
 import wandb
 
-import models
+
+if TYPE_CHECKING:
+    import models
 
 logger: Final = logging.getLogger("cen_brnn")
 
