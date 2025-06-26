@@ -23,18 +23,18 @@ DATA_NAME='cut_t70'
 MIN_CLIENTS=$(ls -1 real_data/${DATA_NAME}/train/*csv | wc -l)
 printf %s\\n {1..30} | xargs -t -I @ -P "${N_CONCURRENT}" -n 1 train_scripts/execute_federated_fedavg.sh "$W_P" "fedavg_${DATA_NAME}_all" "real_data/${DATA_NAME}" $N_ROUNDS $EPOCHS $MIN_CLIENTS $MIN_FIT_CLIENTS '@' "${N_CONCURRENT}"
 printf %s\\n {1..30} | xargs -t -I @ -P "${N_CONCURRENT}" -n 1 train_scripts/execute_federated_fedcube_noq.sh "$W_P" "fedcube_noq_${DATA_NAME}_all" "real_data/${DATA_NAME}" $N_ROUNDS $EPOCHS $MIN_CLIENTS $MIN_FIT_CLIENTS '@' "${N_CONCURRENT}"
-printf %s\\n {1..30} | xargs -t -I @ -P "${N_CONCURRENT}" -n 1 train_scripts/execute_federated_fedprox.sh "$W_P" "fedprox_${DATA_NAME}_all" "real_data/${DATA_NAME}" $N_ROUNDS $EPOCHS $MIN_CLIENTS $MIN_FIT_CLIENTS '@' "${N_CONCURRENT}" 0.5
+printf %s\\n {1..30} | xargs -t -I @ -P "${N_CONCURRENT}" -n 1 train_scripts/execute_federated_fedprox.sh "$W_P" "fedprox_${DATA_NAME}_all" "real_data/${DATA_NAME}" $N_ROUNDS $EPOCHS $MIN_CLIENTS $MIN_FIT_CLIENTS '@' "${N_CONCURRENT}" 0.25
 
 # n70
 DATA_NAME='cut_t70_n70'
 MIN_CLIENTS=$(ls -1 real_data/${DATA_NAME}/train/*csv | wc -l)
 printf %s\\n {1..30} | xargs -t -I @ -P "${N_CONCURRENT}" -n 1 train_scripts/execute_federated_fedavg.sh "$W_P" "fedavg_${DATA_NAME}" "real_data/${DATA_NAME}" $N_ROUNDS $EPOCHS $MIN_CLIENTS $MIN_FIT_CLIENTS '@' "${N_CONCURRENT}"
 printf %s\\n {1..30} | xargs -t -I @ -P "${N_CONCURRENT}" -n 1 train_scripts/execute_federated_fedcube_noq.sh "$W_P" "fedcube_noq_${DATA_NAME}" "real_data/${DATA_NAME}" $N_ROUNDS $EPOCHS $MIN_CLIENTS $MIN_FIT_CLIENTS '@' "${N_CONCURRENT}"
-printf %s\\n {1..30} | xargs -t -I @ -P "${N_CONCURRENT}" -n 1 train_scripts/execute_federated_fedprox.sh "$W_P" "fedprox_${DATA_NAME}" "real_data/${DATA_NAME}" $N_ROUNDS $EPOCHS $MIN_CLIENTS $MIN_FIT_CLIENTS '@' "${N_CONCURRENT}" 0.5
+printf %s\\n {1..30} | xargs -t -I @ -P "${N_CONCURRENT}" -n 1 train_scripts/execute_federated_fedprox.sh "$W_P" "fedprox_${DATA_NAME}" "real_data/${DATA_NAME}" $N_ROUNDS $EPOCHS $MIN_CLIENTS $MIN_FIT_CLIENTS '@' "${N_CONCURRENT}" 0.25
 
 # o70
 DATA_NAME='cut_t70_o70'
 MIN_CLIENTS=$(ls -1 real_data/${DATA_NAME}/train/*csv | wc -l)
 printf %s\\n {1..30} | xargs -t -I @ -P "${N_CONCURRENT}" -n 1 train_scripts/execute_federated_fedavg.sh "$W_P" "fedavg_${DATA_NAME}" "real_data/${DATA_NAME}" $N_ROUNDS $EPOCHS $MIN_CLIENTS $MIN_FIT_CLIENTS '@' "${N_CONCURRENT}"
 printf %s\\n {1..30} | xargs -t -I @ -P "${N_CONCURRENT}" -n 1 train_scripts/execute_federated_fedcube_noq.sh "$W_P" "fedcube_noq_${DATA_NAME}" "real_data/${DATA_NAME}" $N_ROUNDS $EPOCHS $MIN_CLIENTS $MIN_FIT_CLIENTS '@' "${N_CONCURRENT}"
-printf %s\\n {1..30} | xargs -t -I @ -P "${N_CONCURRENT}" -n 1 train_scripts/execute_federated_fedprox.sh "$W_P" "fedprox_${DATA_NAME}" "real_data/${DATA_NAME}" $N_ROUNDS $EPOCHS $MIN_CLIENTS $MIN_FIT_CLIENTS '@' "${N_CONCURRENT}" 0.5
+printf %s\\n {1..30} | xargs -t -I @ -P "${N_CONCURRENT}" -n 1 train_scripts/execute_federated_fedprox.sh "$W_P" "fedprox_${DATA_NAME}" "real_data/${DATA_NAME}" $N_ROUNDS $EPOCHS $MIN_CLIENTS $MIN_FIT_CLIENTS '@' "${N_CONCURRENT}" 0.25

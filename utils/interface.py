@@ -1,11 +1,13 @@
 import logging
 from pathlib import Path
 from typing import Final
+from typing import TYPE_CHECKING
 
 import click
 import wandb
 
-import models
+if TYPE_CHECKING:
+    import models
 
 logger: Final = logging.getLogger("cen_brnn")
 
@@ -52,7 +54,7 @@ def get_wandb_config_data(
     return config_dict
 
 
-def save_model_wandb(brnn_inv: models.BrnnModel) -> None:
+def save_model_wandb(brnn_inv: "models.BrnnModel") -> None:
     if wandb.run is None:
         msg = "wandb.run is not set"
         raise RuntimeError(msg)

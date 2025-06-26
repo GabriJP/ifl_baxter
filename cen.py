@@ -6,16 +6,13 @@ from pathlib import Path
 import click
 import matplotlib.pyplot as plt
 import numpy as np
-import wandb
 
-from models import BrnnModel
 from utils import cli
 from utils import F64_A
 from utils import get_path_descriptor
 from utils import get_wandb_config_data
 from utils import load_gen_data
 from utils import save_model_wandb
-from utils.fed import BrnnClient
 
 logging.basicConfig(level=logging.INFO)
 
@@ -80,15 +77,16 @@ def plot(trajectories_path: Path, recurrent: bool, limb_name: str) -> None:
 
 
 @cli.command()
+@click.option("--limb-name", type=click.Choice(["left", "right"]), required=True)
 @click.argument("TRAJECTORIES_PATH", type=click.Path(file_okay=False, writable=True, resolve_path=True, path_type=Path))
-def describe(trajectories_path: Path) -> None:
+def describe(limb_name: str, trajectories_path: Path) -> None:
     trajectory_paths = [p for p in trajectories_path.iterdir() if p.is_file() and p.suffix == ".csv"]
     paths = [np.loadtxt(trajectory_path, delimiter=" ", skiprows=1) for trajectory_path in trajectory_paths]
 
     from utils.pybullet import pybullet_context
 
     with pybullet_context():
-        descriptors = get_path_descriptor(paths)
+        descriptors = get_path_descriptor(paths, limb_name)
 
     for trajectory_path, descriptor in zip(trajectory_paths, descriptors, strict=False):
         with trajectory_path.with_suffix(".npy").open("wb") as f:
@@ -116,6 +114,10 @@ def cen(
     epochs: int,
     batch_size: int,
 ) -> None:
+    import wandb
+    from models import BrnnModel
+    from utils.fed import BrnnClient
+
     wandb.init(
         project=wandb_project,
         entity="gabijp",

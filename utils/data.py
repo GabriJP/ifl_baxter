@@ -18,11 +18,11 @@ train_min = lim_min
 train_ptp = lim_max - lim_min
 
 
-def get_path_descriptor(array_angs: Iterable[F64_A]) -> tuple[F64_A, ...]:
-    from data_generator import analytic_model as rbd
+def get_path_descriptor(array_angs: Iterable[F64_A], limb_name: str) -> tuple[F64_A, ...]:
+    from data_generator.analytic_model import limbs
 
     descriptors: list[F64_A] = []
-    limb_baxter = rbd.limb_left
+    limb_baxter = limbs[limb_name]
     for array_ang in array_angs:
         xyz = []
         for ang in array_ang:
