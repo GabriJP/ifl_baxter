@@ -48,10 +48,9 @@ class Cube:
         return cls(np.stack([np.array(point_a), np.array(point_b)]))
 
     @classmethod
-    def from_fit_res(cls, fit_res: FitRes) -> "Cube":
-        metrics = fit_res.metrics
-        a_0, a_1, a_2 = metrics.pop("a_0"), metrics.pop("a_1"), metrics.pop("a_2")
-        b_0, b_1, b_2 = metrics.pop("b_0"), metrics.pop("b_1"), metrics.pop("b_2")
+    def from_dict(cls, pos_dict: dict[str, float]) -> "Cube":
+        a_0, a_1, a_2 = pos_dict.pop("a_0"), pos_dict.pop("a_1"), pos_dict.pop("a_2")
+        b_0, b_1, b_2 = pos_dict.pop("b_0"), pos_dict.pop("b_1"), pos_dict.pop("b_2")
 
         return cls(np.array([[a_0, a_1, a_2], [b_0, b_1, b_2]], dtype=np.float64))
 
@@ -89,12 +88,18 @@ class Cube:
         return np.prod(self.descriptor[1] - self.descriptor[0]).item()
 
 
-def aggregate(results: list[tuple[NDArrays, int, Cube]], q: bool) -> NDArrays:
+def deaggregate_path_descriptors(fr: FitRes) -> list[Cube]:
+    all_names = fr.metrics["names"].split("/")[1:]
+    return [Cube.from_dict({k[-3:]: v for k, v in fr.metrics.items() if k[:-4] == name}) for name in all_names]
+
+
+def aggregate(results: list[tuple[NDArrays, int, list[Cube]]], q: bool) -> NDArrays:
     """Compute weighted average."""
     # Calculate intersection cube for each trajectory
-    traj_cubes: list[Cube] = [c for _, _, c in results]
-    intersections: dict[Cube, list[Cube]] = {c: list() for c in traj_cubes}
-    for c1, c2 in itertools.combinations(traj_cubes, 2):
+    traj_cubes: list[list[Cube]] = [c for _, _, c in results]
+    flatten_traj_cubes = [c for lc in traj_cubes for c in lc]
+    intersections: dict[Cube, list[Cube]] = {c: list() for c in flatten_traj_cubes}
+    for c1, c2 in itertools.combinations(flatten_traj_cubes, 2):
         if not c1.intersects(c2):
             continue
         intersection_cube = c1.intersection_cube(c2)
@@ -108,19 +113,26 @@ def aggregate(results: list[tuple[NDArrays, int, Cube]], q: bool) -> NDArrays:
     }
 
     min_weight = min(traj_weights.values(), default=0.0)
+    max_weight = max(traj_weights.values(), default=0.0)
     # No intersections = do not apply weight. Weight ∈ (-∞, 0.0], weight is 0.0 when there is no intersection
-    if np.isclose(min_weight, 0.0):
+    # Also if all overlap the same amount
+    if np.isclose(min_weight, max_weight):
         norm_traj_weights = {c: 1.0 for c in traj_weights}
     else:
-        ptp_weight = (max(traj_weights.values(), default=0.0) - min_weight) * 9
+        ptp_weight = (max_weight - min_weight) * 9
         norm_traj_weights = {c: (w - min_weight) / ptp_weight + 0.1 for c, w in traj_weights.items()}
 
-    # Create a list of weights, each multiplied by the related number of examples
+    def sum_norm_traj_weights(cubes: list[Cube]) -> float:
+        return sum(norm_traj_weights[cube] for cube in cubes)
+
+    # Create a list of weights, each multiplied by the related weight
     weighted_weights = [
-        [layer * (num_examples if q else 1.0) * norm_traj_weights[cube] for layer in weights]
-        for weights, num_examples, cube in results
+        [layer * (num_examples if q else 1.0) * sum_norm_traj_weights(cubes) for layer in weights]
+        for weights, num_examples, cubes in results
     ]
-    total_divide = sum((num_examples if q else 1.0) * norm_traj_weights[cube] for _, num_examples, cube in results)
+    total_divide = sum(
+        (num_examples if q else 1.0) * sum_norm_traj_weights(cubes) for _, num_examples, cubes in results
+    )
 
     # Compute average weights of each layer
     weights_prime: NDArrays = [
@@ -184,7 +196,7 @@ class CubeStrategy(FedAvg):
 
         # Convert results
         weights_results = [
-            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples, Cube.from_fit_res(fit_res))
+            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples, deaggregate_path_descriptors(fit_res))
             for _, fit_res in results
         ]
         aggregated_ndarrays = aggregate(weights_results, self.q)

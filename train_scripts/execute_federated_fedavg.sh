@@ -11,12 +11,22 @@ MIN_CLIENTS=${6:-"4"}
 MIN_FIT_CLIENTS=${7-"7"}
 JOB_ID=${8:-"0"}
 MODULO_N=${9:-"1"}
+ONLINE_CUTS=${10:-"0"}
+ONLINE_ADDITIVE=${11:-"0"}
 
 sleep "$(( JOB_ID % MODULO_N * MODULO_N ))"
 
 PORT=$(( JOB_ID + 8080 ))
 
 CLIENT_OPTS="xavier:${PORT} --wandb-project='${W_P}' --wandb-group='${GID}'"
+
+if [ "${ONLINE_CUTS}" -ne 0 ]; then
+  CLIENT_OPTS="${CLIENT_OPTS} --online-cuts=${ONLINE_CUTS}"
+  if [ "${ONLINE_ADDITIVE}" -ne 0 ]; then
+    CLIENT_OPTS="${CLIENT_OPTS} --online-additive"
+  fi
+fi
+
 
 # shellcheck disable=SC2086
 readarray -t TRAIN_PATHS_OPT < <(ls -S ${DATA_PATH}/train/*csv)

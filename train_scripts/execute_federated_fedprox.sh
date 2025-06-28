@@ -12,6 +12,8 @@ MIN_FIT_CLIENTS=${7-"7"}
 JOB_ID=${8:-"0"}
 MODULO_N=${9:-"1"}
 FEDPROX_PMU=${10:-"0.1"}
+ONLINE_CUTS=${11:-"0"}
+ONLINE_ADDITIVE=${12:-"0"}
 
 sleep "$(( JOB_ID % MODULO_N * MODULO_N ))"
 

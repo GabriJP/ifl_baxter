@@ -46,6 +46,16 @@ def r_squared(y: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
     return tf.subtract(1.0, tf.divide(residual, total))
 
 
+def aggregate_paths_descriptors(trajectories: tuple[Trajectory, ...]) -> dict[str, Scalar]:
+    result_dict: dict[str, Scalar] = dict(names="")
+    for trajectory in trajectories:
+        descriptor_dict = trajectory.descriptor_dict()
+        for pos_name, pos_value in descriptor_dict.items():
+            result_dict[f"{trajectory.name}_{pos_name}"] = pos_value
+            result_dict["names"] += f"/{trajectory.name}"
+    return result_dict
+
+
 class BrnnClient(NumPyClient):
     def __init__(
         self,
@@ -66,14 +76,34 @@ class BrnnClient(NumPyClient):
     def get_parameters(self, config: FitIns) -> NDArrays:  # noqa: ARG002
         return self.model.get_weights()
 
+    def get_train_data(self) -> tuple[F64_A, F64_A, F64_A, F64_A]:
+        train_data = list(self.train_data)
+
+        # If continuous learning and more cuts available, cut data
+        if 0 < self.online_cuts <= self.current_fit:
+            train_data = list()
+            for traj in self.train_data:
+                cut_len = len(traj.path) // self.online_cuts
+                cut_slice = slice(
+                    # Select from the beginning of (whole set or current cut)
+                    0 if self.online_additive else cut_len * self.current_fit,
+                    # Do not go out of bounds
+                    min(len(traj.path), cut_len * (self.current_fit + 1)),
+                )
+                train_data.append(Trajectory(traj.name, traj.descriptor, traj.path[cut_slice]))
+
+        x, y, long_traj = sort_samples_inv(train_data, self.model.config["tx"], step=1)
+
+        mask_idx = idx_split_traj(long_traj, num_split=1)
+
+        x_train, y_train, x_val, y_val = get_train_val(x, y, mask_idx[0])
+        return x_train, y_train, x_val, y_val
+
     def fit(
         self,
         parameters: NDArrays | None,
         config: FitIns,
     ) -> tuple[NDArrays, int, dict[str, Scalar]]:
-        if 0 < self.online_cuts <= self.current_fit + 1:
-            raise ValueError
-
         if parameters is not None:
             self.model.set_weights(parameters)
 
@@ -82,21 +112,7 @@ class BrnnClient(NumPyClient):
 
         epochs, current_epoch, batch_size = config["epochs"], config["current_epoch"], config["batch_size"]
 
-        step = 1
-        x, y, long_traj = sort_samples_inv(self.train_data, self.model.config["tx"], step)
-
-        mask_idx = idx_split_traj(long_traj, num_split=1)
-
-        x_train, y_train, x_val, y_val = get_train_val(x, y, mask_idx[0])
-
-        if self.online_cuts > 0:
-            cut_len = len(x_train) // self.online_cuts
-            cut_slice = (
-                slice(0, cut_len * (self.current_fit + 1))
-                if self.online_additive
-                else slice(cut_len * self.current_fit, cut_len * (self.current_fit + 1))
-            )
-            x_train, y_train = x_train[cut_slice], y_train[cut_slice]
+        x_train, y_train, x_val, y_val = self.get_train_data()
 
         callbacks = [
             WandbMetricsLogger(),
@@ -112,7 +128,7 @@ class BrnnClient(NumPyClient):
             callbacks=callbacks,
         )
         self.current_fit += 1
-        return self.get_parameters(config), sum(map(len, self.train_data)), self.train_data[0].descriptor_dict()
+        return self.get_parameters(config), sum(map(len, self.train_data)), aggregate_paths_descriptors(self.train_data)
 
     def evaluate(
         self,
@@ -127,9 +143,7 @@ class BrnnClient(NumPyClient):
         if do_eval:
             x, y, _ = sort_samples_inv(self.test_data, self.model.config["tx"], step=1)
         else:
-            x, y, long_traj = sort_samples_inv(self.train_data, self.model.config["tx"], step=1)
-            mask_idx = idx_split_traj(long_traj, num_split=1)
-            _, _, x, y = get_train_val(x, y, mask_idx[0])
+            _, _, x, y = self.get_train_data()
 
         y_hat = self.model.predict(x)
 

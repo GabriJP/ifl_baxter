@@ -11,6 +11,8 @@ MIN_CLIENTS=${6:-"4"}
 MIN_FIT_CLIENTS=${7-"7"}
 JOB_ID=${8:-"0"}
 MODULO_N=${9:-"1"}
+ONLINE_CUTS=${10:-"0"}
+ONLINE_ADDITIVE=${11:-"0"}
 
 sleep "$(( JOB_ID % MODULO_N * MODULO_N ))"
 
