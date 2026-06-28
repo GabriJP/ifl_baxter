@@ -141,7 +141,7 @@ class TorchClient(NumPyClient):
         )
         mae_dict["mae_mean"] = float(np.mean(mae_joint))
 
-        wandb_dict = dict(test=dict(r2=r2, **mae_dict))
+        wandb_dict = dict(agg=dict(r2=r2, **mae_dict))
         if config is None or config["do_eval"]:
             wandb.log(wandb_dict)
             txt_logger.info(wandb_dict)
