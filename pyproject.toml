@@ -1,3 +1,40 @@
+[project]
+name = "ifl-baxter"
+version = "0.0.1"
+requires-python = ">=3.10,<3.11"
+dependencies = [
+    "click",
+    "cython",
+    "flwr",
+    "grpcio",
+    "kaleido",
+    "keras",
+    "matplotlib",
+    "notebook",
+    "pandas",
+    "plotly",
+    "pre-commit",
+    "protobuf",
+    "pybullet",
+    "pydot",
+    "torch",
+    "scipy",
+    "statsmodels",
+    "tensorboard",
+    "tensorflow[and-cuda]<2.16,>=2.15",
+    "tensorrt",
+    "wandb",
+    "pyyaml",
+]
+
+[tool.uv.sources]
+torch = { index = "pytorch" }
+
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu132"
+explicit = true
+
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
 exclude = [
@@ -49,7 +86,7 @@ select = [
     # flake8-simplify
     "SIM",
     # isort
-#    "I",
+    #    "I",
     # Warning
     "W",
     # mccabe
