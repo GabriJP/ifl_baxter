@@ -116,8 +116,9 @@ class BrnnTorch(torch.nn.Module):
             self.train()
             self.loss_metric.clear()
 
-            x_train_split = torch.split(x_train_t, batch_size)
-            y_train_split = torch.split(y_train_t, batch_size)
+            perm = torch.randperm(len(x_train_t), device=self.device)
+            x_train_split = torch.split(x_train_t[perm], batch_size)
+            y_train_split = torch.split(y_train_t[perm], batch_size)
 
             for step_x_train, step_y_train in tqdm.tqdm(
                 zip(x_train_split, y_train_split, strict=True),
