@@ -76,7 +76,7 @@ class Limb:
         return torque[self.joint_idx_dof]
 
     def get_torque_traj(self, pos: F64_A, vel: F64_A, acl: F64_A) -> F64_A:
-        return np.array([self.inv_dyn(*pva) for pva in zip(pos, vel, acl, strict=False)])  # type: ignore[arg-type]
+        return np.array([self.inv_dyn(*pva) for pva in zip(pos, vel, acl, strict=False)])
 
     def reset_joints(self, ang_joint: F64_A, vel_joint: F64_A | None = None) -> F64_A:
         if vel_joint is None:

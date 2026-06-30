@@ -2,11 +2,11 @@
 # See https://pre-commit.com/hooks.html for more hooks
 default_language_version:
   # force all unspecified python hooks to run python3
-  python: python3
+  python: python3.13
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
       - id: check-ast
@@ -24,13 +24,13 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/asottile/reorder_python_imports
-    rev: v3.15.0
+    rev: v3.16.0
     hooks:
       - id: reorder-python-imports
         args: [ --py313-plus ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.13
+    rev: v0.15.20
     hooks:
       # Run the linter.
       - id: ruff-check
@@ -39,10 +39,10 @@ repos:
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.16.0
+    rev: v2.1.0
     hooks:
       - id: mypy
-        additional_dependencies: [ '--extra-index-url=https://download.pytorch.org/whl/cu128', click, keras, numpy, types-requests, torch, wandb ]
+        additional_dependencies: [ '--extra-index-url=https://download.pytorch.org/whl/cu132', click, keras, numpy, types-requests, torch, wandb ]
 
   - repo: local
     hooks:
@@ -53,6 +53,6 @@ repos:
         types: [ python ]
         pass_filenames: false
         verbose: true
-        additional_dependencies: [ '--extra-index-url=https://download.pytorch.org/whl/cu128', click, flwr, keras, matplotlib, numpy, pybullet, scipy, torch, tqdm, wandb ]
+        additional_dependencies: [ '--extra-index-url=https://download.pytorch.org/whl/cu132', click, flwr, keras, matplotlib, numpy, pybullet, scipy, torch, tqdm, wandb ]
 
 exclude: '^(.idea/|wandb/|data_generator/baxter_common)'

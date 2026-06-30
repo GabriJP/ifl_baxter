@@ -132,14 +132,14 @@ class TorchClient(NumPyClient):
         y_hat = self.model.predict(x)
 
         mae_joint, r2 = calc_performance(y_t, y_hat)
-        mae_dict = dict(
+        mae_dict = dict(mae_mean=float(np.mean(mae_joint)))
+        mae_dict.update(
             zip(
                 ("mae_s0", "mae_s1", "mae_e0", "mae_e1", "mae_w0", "mae_w1", "mae_w2"),
                 mae_joint.tolist(),
                 strict=True,
             )
         )
-        mae_dict["mae_mean"] = float(np.mean(mae_joint))
 
         wandb_dict = dict(agg=dict(r2=r2, **mae_dict))
         if config is None or config["do_eval"]:

@@ -1,14 +1,17 @@
 import logging
 import pickle
 from collections.abc import Iterable
+from collections.abc import Sequence
 from pathlib import Path
 
 import click
 import matplotlib.pyplot as plt
 import numpy as np
 import wandb
+from numpy.typing import NDArray
 
 import models
+from models import BrnnTorch
 from utils import cli
 from utils import F64_A
 from utils import get_path_descriptor
@@ -26,7 +29,7 @@ def get_xyz_ee(array_ang: F64_A, limb_name: str) -> F64_A:
     limb_baxter = rbd.limbs[limb_name]
     xyz = []
     for ang in array_ang:
-        limb_baxter.reset_joints(ang)  # type: ignore[arg-type]
+        limb_baxter.reset_joints(ang)
         xyz_i = limb_baxter.get_ee_state()
         xyz.append(xyz_i)
 
@@ -95,6 +98,35 @@ def describe(trajectories_path: Path) -> None:
             pickle.dump(descriptor, f)
 
 
+def load_keras_weights_into_torch(weights: Sequence[NDArray[np.float32]], model: BrnnTorch) -> None:
+    def convert_input_kernel(kernel: NDArray[np.float32]) -> NDArray[np.float32]:
+        kernel_r, kernel_z, kernel_h = np.hsplit(kernel, 3)
+        return np.concatenate((kernel_z.T, kernel_r.T, kernel_h.T))
+
+    def convert_recurrent_kernel(kernel: NDArray[np.float32]) -> NDArray[np.float32]:
+        kernel_r, kernel_z, kernel_h = np.hsplit(kernel, 3)
+        return np.concatenate((kernel_z.T, kernel_r.T, kernel_h.T))
+
+    def convert_bias(bias: NDArray[np.float32]) -> NDArray[np.float32]:
+        bias = bias.reshape(2, 3, -1)
+        return bias[:, [1, 0, 2], :].reshape((2, -1))
+
+    model.set_weights(
+        [
+            convert_input_kernel(weights[0]),
+            convert_recurrent_kernel(weights[1]),
+            convert_bias(weights[2])[0],
+            convert_bias(weights[2])[1],
+            convert_input_kernel(weights[3]),
+            convert_recurrent_kernel(weights[4]),
+            convert_bias(weights[5])[0],
+            convert_bias(weights[5])[1],
+            weights[6].T,
+            weights[7],
+        ]
+    )
+
+
 @cli.command()
 @click.option("--wandb-project", default="baxter")
 @click.option("--wandb-group", required=True)
@@ -132,6 +164,10 @@ def cen(
     train_data, test_data = load_gen_data(train_paths, test_paths)
 
     brnn_inv = models.BrnnTorch(tx=25, loss=MSELoss())
+    # with Path("keras_model.pckl").open("rb") as fd:
+    #     weights = pickle.load(fd)
+    # load_keras_weights_into_torch(weights, brnn_inv)
+
     client = TorchClient(brnn_inv, train_data, test_data, online_cuts=False, online_additive=False)
 
     client.fit(None, dict(epochs=epochs, current_epoch=0, batch_size=batch_size))
